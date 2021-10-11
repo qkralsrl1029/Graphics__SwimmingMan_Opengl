@@ -22,7 +22,11 @@ glm::mat4 viewMat;
 GLuint pvmMatrixID;		//vertex shader uniform ID
 
 float rotAngle = 0.0f;
-int isDrawingCar = true;
+float legRotAngle = 0.0f;
+float legMaxAngle = 0.6f;
+float legMinAngle = -0.6f;
+bool isLegUp = true;
+bool isDrawingCar = true;
 
 typedef glm::vec4  color4;
 typedef glm::vec4  point4;
@@ -128,7 +132,7 @@ init()
 	pvmMatrixID = glGetUniformLocation(program, "mPVM");		//uniform으로 정의된 mPVM, 모든 vertex를 대상으로 동일한 작업 수행 <-> in/out
 
 	projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-	viewMat = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));	//Camera pos
+	viewMat = glm::lookAt(glm::vec3(0, 0, 6), glm::vec3(0.2, 0, 0), glm::vec3(0, 1, 0));	//Camera pos
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -177,6 +181,8 @@ void drawCar(glm::mat4 carMat)
 void drawSwimmingMan(glm::mat4 basis)
 {
 	glm::mat4 modelMat, pvmMat;
+
+	
 
 	//body
 	modelMat = glm::scale(basis, glm::vec3(1.8, 1, 0.6));
@@ -232,7 +238,50 @@ void drawSwimmingMan(glm::mat4 basis)
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+	 
+	
 
+
+	// right_upperLeg
+	// TRST
+	modelMat = glm::translate(basis, glm::vec3(1, 0, 0.2));
+	modelMat = glm::rotate(modelMat, legRotAngle,glm::vec3(0, 0, 1));
+	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
+	modelMat = glm::translate(modelMat, glm::vec3(0.5, 0, 0));
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	// right_lowerLeg
+	// TRST
+	modelMat = glm::translate(basis, glm::vec3(1, 0, 0.2));
+	modelMat = glm::rotate(modelMat, legRotAngle, glm::vec3(0, 0, 1));
+	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
+	modelMat = glm::translate(modelMat, glm::vec3(1.6, 0, 0));
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+
+	// left_upperLeg
+	// TRST
+	modelMat = glm::translate(basis, glm::vec3(1.1, 0, -0.2));
+	modelMat = glm::rotate(modelMat, -legRotAngle, glm::vec3(0, 0, 1));
+	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
+	modelMat = glm::translate(modelMat, glm::vec3(0.5, 0, 0));
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	// left_lowerLeg
+	// TRST
+	modelMat = glm::translate(basis, glm::vec3(1.1, 0, -0.2));
+	modelMat = glm::rotate(modelMat, -legRotAngle, glm::vec3(0, 0, 1));
+	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
+	modelMat = glm::translate(modelMat, glm::vec3(1.6, 0, 0));
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 
 
@@ -276,6 +325,17 @@ void idle()		//OpenGl이 아이들 상태일때 호출되는 함수, 회전각 및 화면 최신화
 	{
 		//to rotate consistently regardless of HW
 		float t = abs(currTime - prevTime);
+
+		if (legRotAngle >= legMaxAngle)
+			isLegUp = false;
+		else if (legRotAngle <= legMinAngle)
+			isLegUp = true;
+
+		if(isLegUp)
+			legRotAngle += glm::radians(t * 360.0f / 10000.0f);
+		else
+			legRotAngle -= glm::radians(t * 360.0f / 10000.0f);
+
 		rotAngle += glm::radians(t*360.0f / 10000.0f);		//10초에 한바퀴
 		prevTime = currTime;
 		glutPostRedisplay();
