@@ -128,7 +128,7 @@ init()
 	pvmMatrixID = glGetUniformLocation(program, "mPVM");		//uniform으로 정의된 mPVM, 모든 vertex를 대상으로 동일한 작업 수행 <-> in/out
 
 	projectMat = glm::perspective(glm::radians(65.0f), 1.0f, 0.1f, 100.0f);
-	viewMat = glm::lookAt(glm::vec3(0, 0, 2), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	viewMat = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));	//Camera pos
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -174,14 +174,79 @@ void drawCar(glm::mat4 carMat)
 	}
 }
 
+void drawSwimmingMan(glm::mat4 basis)
+{
+	glm::mat4 modelMat, pvmMat;
+
+	//body
+	modelMat = glm::scale(basis, glm::vec3(1.8, 1, 0.6));
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	//head
+	modelMat = glm::translate(basis, glm::vec3(-1.4, 0, 0));  //P*V*C*T*S*v
+	modelMat = glm::scale(modelMat, glm::vec3(0.5, 0.6, 0.2));
+	// projection* view * model
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+
+	//right_arm
+	//TRST
+	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, 0.4));				//이후 body에 맞춰 위치 설정
+	modelMat = glm::rotate(modelMat, rotAngle , glm::vec3(0, 0, 1));	//회전
+	modelMat = glm::scale(modelMat, glm::vec3(0.8, 0.5, 0.1));				//스케일링
+	modelMat = glm::translate(modelMat, glm::vec3(0.4, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	//right_forearm
+	//TRST
+	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, 0.4));				//이후 body에 맞춰 위치 설정
+	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
+	modelMat = glm::scale(modelMat, glm::vec3(0.6, 0.5, 0.1));				//스케일링
+	modelMat = glm::translate(modelMat, glm::vec3(2, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	//left_arm
+	//TRST
+	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, -0.4));				//이후 body에 맞춰 위치 설정
+	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
+	modelMat = glm::scale(modelMat, glm::vec3(0.8, 0.5, 0.1));				//스케일링
+	modelMat = glm::translate(modelMat, glm::vec3(-0.4, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+	//left_forearm
+	//TRST
+	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, -0.4));				//이후 body에 맞춰 위치 설정
+	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
+	modelMat = glm::scale(modelMat, glm::vec3(0.6, 0.5, 0.1));				//스케일링
+	modelMat = glm::translate(modelMat, glm::vec3(-2, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	pvmMat = projectMat * viewMat * modelMat;
+	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
+
+
+
+
+}
+
 
 void display(void)
 {
 	glm::mat4 worldMat, pvmMat;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	worldMat = glm::rotate(glm::mat4(1.0f), rotAngle, glm::vec3(1.0f, 1.0f, 0.0f));	//for rotation, rotate(기준,회전각,회전축)
+	worldMat = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f, 1.0f, 0.0f));	//for rotation, rotate(기준,회전각,회전축)
 
+	/*
 	if (isDrawingCar)
 	{
 		drawCar(worldMat);
@@ -192,13 +257,17 @@ void display(void)
 		glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 		glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 	}
+	*/
 
+
+	drawSwimmingMan(worldMat);
 	glutSwapBuffers();
+
 }
 
 //----------------------------------------------------------------------------
 
-void idle()
+void idle()		//OpenGl이 아이들 상태일때 호출되는 함수, 회전각 및 화면 최신화
 {
 	static int prevTime = glutGet(GLUT_ELAPSED_TIME);	//return how much time takes after program runs
 	int currTime = glutGet(GLUT_ELAPSED_TIME);
@@ -216,7 +285,7 @@ void idle()
 //----------------------------------------------------------------------------
 
 void
-keyboard(unsigned char key, int x, int y)
+keyboard(unsigned char key, int x, int y)	//change mode
 {
 	switch (key) {
 	case 'c': case 'C':
@@ -231,7 +300,7 @@ keyboard(unsigned char key, int x, int y)
 
 //----------------------------------------------------------------------------
 
-void resize(int w, int h)
+void resize(int w, int h)	//when window size changed
 {
 	//match with size of window, regular aspect ratio
 	float ratio = (float)w / (float)h;
