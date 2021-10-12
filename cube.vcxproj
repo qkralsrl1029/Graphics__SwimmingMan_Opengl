@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\cube.cpp" />
+    <ClCompile Include="src\swimmingMan.cpp" />
     <ClCompile Include="src\InitShader.cpp" />
   </ItemGroup>
   <ItemGroup>

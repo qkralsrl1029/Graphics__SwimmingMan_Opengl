@@ -1,1 +1,2 @@
 C:\Users\simon\학교\강의자료\3학년\2학기\그래픽스\gl_Car\Debug\cube.exe
+C:\Users\simon\GitHub\Graphics__SwimmingMan_Opengl\Debug\cube.exe
