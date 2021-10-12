@@ -21,12 +21,40 @@ glm::mat4 viewMat;
 
 GLuint pvmMatrixID;		//vertex shader uniform ID
 
-float rotAngle = 0.0f;
+
+////////////////////////////////////////////////////////////
+float armRotAngle = 0.0f;
 float legRotAngle = 0.0f;
 float legMaxAngle = 0.6f;
 float legMinAngle = -0.6f;
 bool isLegUp = true;
-bool isDrawingCar = true;
+
+float gap = 0.1f;
+float armRotGap = 0.9f;
+float legRotGap = 0.1f;
+
+//Component Scale
+glm::vec3 bodyScale = glm::vec3(1.8, 1, 0.6);
+glm::vec3 headScale = glm::vec3(0.5, 0.6, 0.2);
+glm::vec3 armScale = glm::vec3(0.8, 0.5, 0.1);
+glm::vec3 forearmScale = glm::vec3(0.6, 0.5, 0.1);
+glm::vec3 upperlegScale = glm::vec3(1, 0.5, 0.1);
+glm::vec3 lowerlegScale = glm::vec3(1, 0.5, 0.1);
+
+//Component Position with matching parent to make Hierachy
+glm::vec3 bodyPos = glm::vec3(0, 0, 0);		// highest parent
+glm::vec3 headPos = glm::vec3(bodyPos.x - bodyScale.x + headScale.x, bodyPos.y, bodyPos.z);
+glm::vec3 rightArmPos = glm::vec3(bodyPos.x - (armScale.x / 2), bodyPos.y, bodyPos.z + (bodyScale.z / 2) + gap);
+glm::vec3 rightForearmPos = glm::vec3(rightArmPos.x, rightArmPos.y, rightArmPos.z);
+glm::vec3 leftArmPos = glm::vec3(bodyPos.x - (armScale.x / 2), bodyPos.y, bodyPos.z - (bodyScale.z / 2) - gap);
+glm::vec3 leftForearmPos = glm::vec3(leftArmPos.x, leftArmPos.y, leftArmPos.z);
+glm::vec3 rightUpperlegPos = glm::vec3(bodyPos.x + upperlegScale.x, bodyPos.y, bodyPos.z + upperlegScale.z + gap);
+glm::vec3 rightLowerlegPos = glm::vec3(rightUpperlegPos.x, rightUpperlegPos.y, rightUpperlegPos.z);
+glm::vec3 leftUpperlegPos = glm::vec3(bodyPos.x + upperlegScale.x, bodyPos.y, bodyPos.z - upperlegScale.z - gap);
+glm::vec3 leftLowerLegPos = glm::vec3(leftUpperlegPos.x, leftUpperlegPos.y, leftUpperlegPos.z);
+
+
+////////////////////////////////////////////////////////////
 
 typedef glm::vec4  color4;
 typedef glm::vec4  point4;
@@ -140,60 +168,21 @@ init()
 
 //----------------------------------------------------------------------------
 
-void drawCar(glm::mat4 carMat)
-{
-	glm::mat4 modelMat, pvmMat;
-	glm::vec3 wheelPos[4];
-
-	wheelPos[0] = glm::vec3(0.3, 0.24, -0.1); // rear right
-	wheelPos[1] = glm::vec3(0.3, -0.24, -0.1); // rear left
-	wheelPos[2] = glm::vec3(-0.3, 0.24, -0.1); // front right
-	wheelPos[3] = glm::vec3(-0.3, -0.24, -0.1); // front left
-
-	// car body
-	modelMat = glm::scale(carMat, glm::vec3(1, 0.6, 0.2));		//scaling, 차체를 만들기 위해 납작하고 길게
-	pvmMat = projectMat * viewMat * modelMat;
-	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
-	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-
-	// car top
-	// model * translation * scailing * vertices
-	modelMat = glm::translate(carMat, glm::vec3(0, 0, 0.2));  //P*V*C*T*S*v
-	modelMat = glm::scale(modelMat, glm::vec3(0.5, 0.6, 0.2));
-	// projection* view * model
-	pvmMat = projectMat * viewMat * modelMat;
-	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
-	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-
-	// car wheel
-	for (int i = 0; i < 4; i++)
-	{
-		modelMat = glm::translate(carMat, wheelPos[i]);  //P*V*C*T*S*v	//translation과 rotation의 순서 주의
-		modelMat = glm::scale(modelMat, glm::vec3(0.2, 0.1, 0.2));
-		//wheel rotation
-		modelMat = glm::rotate(modelMat, -rotAngle*50.0f, glm::vec3(0, 1, 0));	// 좌우방향 회전을 위해 y축을 기준으로 회전
-		pvmMat = projectMat * viewMat * modelMat;
-		glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
-		glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-	}
-}
-
 void drawSwimmingMan(glm::mat4 basis)
 {
 	glm::mat4 modelMat, pvmMat;
 
 	
-
 	//body
-	modelMat = glm::scale(basis, glm::vec3(1.8, 1, 0.6));
+	modelMat = glm::translate(basis, bodyPos);
+	modelMat = glm::scale(modelMat, bodyScale);
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	//head
-	modelMat = glm::translate(basis, glm::vec3(-1.4, 0, 0));  //P*V*C*T*S*v
-	modelMat = glm::scale(modelMat, glm::vec3(0.5, 0.6, 0.2));
-	// projection* view * model
+	modelMat = glm::translate(basis, headPos);  
+	modelMat = glm::scale(modelMat, headScale);
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
@@ -201,63 +190,61 @@ void drawSwimmingMan(glm::mat4 basis)
 
 	//right_arm
 	//TRST
-	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, 0.4));				//이후 body에 맞춰 위치 설정
-	modelMat = glm::rotate(modelMat, rotAngle , glm::vec3(0, 0, 1));	//회전
-	modelMat = glm::scale(modelMat, glm::vec3(0.8, 0.5, 0.1));				//스케일링
-	modelMat = glm::translate(modelMat, glm::vec3(0.4, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	modelMat = glm::translate(basis, rightArmPos);										//이후 body에 맞춰 위치 설정
+	modelMat = glm::rotate(modelMat, armRotAngle, glm::vec3(0, 0, 1));		//회전
+	modelMat = glm::scale(modelMat, armScale);										//스케일링
+	modelMat = glm::translate(modelMat, glm::vec3(armScale.x/2, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	//right_forearm
 	//TRST
-	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, 0.4));				//이후 body에 맞춰 위치 설정
-	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
-	modelMat = glm::scale(modelMat, glm::vec3(0.6, 0.5, 0.1));				//스케일링
-	modelMat = glm::translate(modelMat, glm::vec3(2, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	modelMat = glm::translate(basis, rightForearmPos);			
+	modelMat = glm::rotate(modelMat, armRotAngle, glm::vec3(0, 0, 1));	
+	modelMat = glm::scale(modelMat, forearmScale);				
+	modelMat = glm::translate(modelMat, glm::vec3(armScale.x+(forearmScale.x/2)+ armRotGap, 0, 0));		
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	//left_arm
 	//TRST
-	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, -0.4));				//이후 body에 맞춰 위치 설정
-	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
-	modelMat = glm::scale(modelMat, glm::vec3(0.8, 0.5, 0.1));				//스케일링
-	modelMat = glm::translate(modelMat, glm::vec3(-0.4, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	modelMat = glm::translate(basis, leftArmPos);				
+	modelMat = glm::rotate(modelMat, armRotAngle, glm::vec3(0, 0, 1));	
+	modelMat = glm::scale(modelMat, armScale);				
+	modelMat = glm::translate(modelMat, glm::vec3(-armScale.x / 2, 0, 0));		
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	//left_forearm
 	//TRST
-	modelMat = glm::translate(basis, glm::vec3(-0.4, 0, -0.4));				//이후 body에 맞춰 위치 설정
-	modelMat = glm::rotate(modelMat, rotAngle, glm::vec3(0, 0, 1));	//회전
-	modelMat = glm::scale(modelMat, glm::vec3(0.6, 0.5, 0.1));				//스케일링
-	modelMat = glm::translate(modelMat, glm::vec3(-2, 0, 0));		//로컬 회전축으로 회전시키기 위해 임의의 회전축 방향으로 먼저 이동
+	modelMat = glm::translate(basis, leftForearmPos);				
+	modelMat = glm::rotate(modelMat, armRotAngle, glm::vec3(0, 0, 1));	
+	modelMat = glm::scale(modelMat, forearmScale);			
+	modelMat = glm::translate(modelMat, glm::vec3(-(armScale.x + (forearmScale.x / 2) + armRotGap), 0, 0));		
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 	 
 	
-
-
 	// right_upperLeg
 	// TRST
-	modelMat = glm::translate(basis, glm::vec3(1, 0, 0.2));
+	modelMat = glm::translate(basis, rightUpperlegPos);
 	modelMat = glm::rotate(modelMat, legRotAngle,glm::vec3(0, 0, 1));
-	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
-	modelMat = glm::translate(modelMat, glm::vec3(0.5, 0, 0));
+	modelMat = glm::scale(modelMat,upperlegScale);
+	modelMat = glm::translate(modelMat, glm::vec3(upperlegScale.x/2, 0, 0));
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	// right_lowerLeg
 	// TRST
-	modelMat = glm::translate(basis, glm::vec3(1, 0, 0.2));
+	modelMat = glm::translate(basis, rightLowerlegPos);
 	modelMat = glm::rotate(modelMat, legRotAngle, glm::vec3(0, 0, 1));
-	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
-	modelMat = glm::translate(modelMat, glm::vec3(1.6, 0, 0));
+	modelMat = glm::scale(modelMat, lowerlegScale);
+	modelMat = glm::translate(modelMat, glm::vec3(upperlegScale.x + (lowerlegScale.x / 2) + legRotGap, 0, 0));
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
@@ -265,26 +252,23 @@ void drawSwimmingMan(glm::mat4 basis)
 
 	// left_upperLeg
 	// TRST
-	modelMat = glm::translate(basis, glm::vec3(1.1, 0, -0.2));
+	modelMat = glm::translate(basis, leftUpperlegPos);
 	modelMat = glm::rotate(modelMat, -legRotAngle, glm::vec3(0, 0, 1));
-	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
-	modelMat = glm::translate(modelMat, glm::vec3(0.5, 0, 0));
+	modelMat = glm::scale(modelMat, upperlegScale);
+	modelMat = glm::translate(modelMat, glm::vec3(upperlegScale.x/2, 0, 0));
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
 
 	// left_lowerLeg
 	// TRST
-	modelMat = glm::translate(basis, glm::vec3(1.1, 0, -0.2));
+	modelMat = glm::translate(basis, leftLowerLegPos);
 	modelMat = glm::rotate(modelMat, -legRotAngle, glm::vec3(0, 0, 1));
-	modelMat = glm::scale(modelMat, glm::vec3(1, 0.5, 0.1));
-	modelMat = glm::translate(modelMat, glm::vec3(1.6, 0, 0));
+	modelMat = glm::scale(modelMat, lowerlegScale);
+	modelMat = glm::translate(modelMat, glm::vec3(upperlegScale.x + (lowerlegScale.x / 2) + legRotGap, 0, 0));
 	pvmMat = projectMat * viewMat * modelMat;
 	glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-
-
-
 }
 
 
@@ -294,20 +278,6 @@ void display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	worldMat = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f, 1.0f, 0.0f));	//for rotation, rotate(기준,회전각,회전축)
-
-	/*
-	if (isDrawingCar)
-	{
-		drawCar(worldMat);
-	}
-	else
-	{
-		pvmMat = projectMat * viewMat * worldMat;		//프로젝션 * 뷰 * 모델
-		glUniformMatrix4fv(pvmMatrixID, 1, GL_FALSE, &pvmMat[0][0]);
-		glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-	}
-	*/
-
 
 	drawSwimmingMan(worldMat);
 	glutSwapBuffers();
@@ -332,11 +302,11 @@ void idle()		//OpenGl이 아이들 상태일때 호출되는 함수, 회전각 및 화면 최신화
 			isLegUp = true;
 
 		if(isLegUp)
-			legRotAngle += glm::radians(t * 360.0f / 10000.0f);
+			legRotAngle += glm::radians(t * 360.0f / 5000.0f);
 		else
-			legRotAngle -= glm::radians(t * 360.0f / 10000.0f);
+			legRotAngle -= glm::radians(t * 360.0f / 5000.0f);
 
-		rotAngle += glm::radians(t*360.0f / 10000.0f);		//10초에 한바퀴
+		armRotAngle += glm::radians(t*360.0f / 5000.0f);		//5초에 한바퀴
 		prevTime = currTime;
 		glutPostRedisplay();
 	}
@@ -348,9 +318,6 @@ void
 keyboard(unsigned char key, int x, int y)	//change mode
 {
 	switch (key) {
-	case 'c': case 'C':
-		isDrawingCar = !isDrawingCar;
-		break;
 	case 033:  // Escape key
 	case 'q': case 'Q':
 		exit(EXIT_SUCCESS);
@@ -380,7 +347,7 @@ int main(int argc, char **argv)
 	glutInitWindowSize(512, 512);
 	glutInitContextVersion(3, 2);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
-	glutCreateWindow("Color Car");
+	glutCreateWindow("Swimming Man");
 
 	glewInit();
 
